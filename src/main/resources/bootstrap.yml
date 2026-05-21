@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: opengradle
+  main:
+    web-application-type: reactive
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      config:
+        file-extension: yaml
+        # server-addr is set per profile, e.g. bootstrap-local.yml
+        # shared-configs:
+        #   - data-id: global-variables.yaml
+        #     refresh: true

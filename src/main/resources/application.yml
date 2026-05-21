@@ -1,0 +1,65 @@
+server:
+  port: 9999
+
+spring:
+  codec:
+    max-in-memory-size: 10MB
+  jackson:
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    timeout: 3000ms
+    jedis:
+      pool:
+        max-active: 50
+        max-idle: 20
+        min-idle: 5
+        max-wait: 3000ms
+
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
+    gateway:
+      # Sample routes — replace with real services.
+      # Routes can also be sourced from Nacos by adding them to the
+      # opengradle.yaml dataId in your Nacos namespace.
+      routes:
+        - id: example_route
+          uri: lb://example-service
+          predicates:
+            - Path=/example/**
+          filters:
+            - StripPrefix=1
+
+# Whitelist regexes bypass the AuthFilter (path is matched with the leading "/" stripped).
+gateway:
+  whitelist:
+    - actuator/.*
+    - auth/login
+
+# Auth settings
+auth:
+  # Token TTL in seconds; refreshed on each successful login.
+  token-ttl-seconds: 7200
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,refresh
+  endpoint:
+    health:
+      show-details: when-authorized
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    com.opengradle: debug
+    org.springframework.cloud.gateway: info
