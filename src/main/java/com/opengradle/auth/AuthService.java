@@ -7,9 +7,9 @@ import com.opengradle.auth.dto.LoginRequest;
 import com.opengradle.auth.dto.LoginResponse;
 import com.opengradle.constant.RedisConstant;
 import com.opengradle.utils.RedisUtils;
+import com.opengradle.config.AuthConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -36,10 +36,12 @@ import java.util.Optional;
 public class AuthService {
 
     private final RedisUtils redisUtils;
-
-    /** Token TTL — refreshed on each successful auth. */
-    @Value("${auth.token-ttl-seconds:7200}")
-    private long tokenTtlSeconds;
+    /**
+     * Hot-reloadable config bean (sourced from Nacos / application.yml).
+     * We inject the bean instead of using a raw {@code @Value} so that changes
+     * to {@code auth.token-ttl-seconds} take effect without restarting the app.
+     */
+    private final AuthConfiguration authConfiguration;
 
     /**
      * Demo user store. Replace with a real {@code UserRepository} lookup.
@@ -92,13 +94,14 @@ public class AuthService {
                 .superAdmin(user.superAdmin)
                 .build();
 
+        long ttl = authConfiguration.getTokenTtlSeconds();
         String token = IdUtil.fastSimpleUUID();
-        redisUtils.set(RedisConstant.TOKENS + token, ctx, tokenTtlSeconds);
+        redisUtils.set(RedisConstant.TOKENS + token, ctx, ttl);
         log.info("auth: login ok, user={}, token={}", user.username, token);
 
         return Optional.of(LoginResponse.builder()
                 .token(token)
-                .expiresIn(tokenTtlSeconds)
+                .expiresIn(ttl)
                 .user(ctx)
                 .build());
     }

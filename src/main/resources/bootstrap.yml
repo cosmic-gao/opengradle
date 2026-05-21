@@ -5,11 +5,25 @@ spring:
     web-application-type: reactive
   profiles:
     active: local
+
   cloud:
     nacos:
       config:
+        # Server address is per-environment, see bootstrap-<profile>.yml
         file-extension: yaml
-        # server-addr is set per profile, e.g. bootstrap-local.yml
+        # Don't crash on startup if Nacos is unreachable — useful for local dev.
+        # Set to true in production so misconfigured environments fail loudly.
+        fail-fast: false
+        # Enable @RefreshScope hot-reload for properties pushed through Nacos.
+        refresh-enabled: true
+        # Spring Cloud 2020+ requires explicit opt-in or check-disable for config import.
+        # We disable the check so the app can start without a pre-existing dataId.
+        import-check:
+          enabled: false
+        # Shared configs are loaded for every service in the org — typically things
+        # like a feature-flag map or env-wide secrets. Uncomment when needed:
+        #
         # shared-configs:
         #   - data-id: global-variables.yaml
+        #     group: DEFAULT_GROUP
         #     refresh: true

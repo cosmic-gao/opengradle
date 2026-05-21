@@ -28,9 +28,10 @@ src/main/java/com/opengradle/
 │       └── LoginResponse.java
 ├── config/
 │   ├── AppConfiguration.java                   # WebClient + Jackson + converters
+│   ├── AuthConfiguration.java                  # @RefreshScope auth.* settings
 │   ├── GatewayContext.java                     # per-request context bag
 │   ├── RedisConfiguration.java                 # RedisTemplate w/ Jackson serializer
-│   └── WhiteListConfiguration.java             # bind gateway.whitelist
+│   └── WhiteListConfiguration.java             # @RefreshScope gateway.whitelist
 ├── constant/
 │   ├── Constant.java                           # header names, etc.
 │   └── RedisConstant.java                      # redis key prefixes
@@ -45,10 +46,15 @@ src/main/java/com/opengradle/
     └── Result.java                             # unified response envelope
 
 src/main/resources/
-├── bootstrap.yml                               # Nacos config bootstrap
-├── bootstrap-local.yml                         # local Nacos addr
-├── application.yml                             # gateway routes, redis, actuator, whitelist
+├── bootstrap.yml                               # Nacos enable + global Nacos config
+├── bootstrap-local.yml                         # local Nacos addr (per-profile)
+├── application.yml                             # in-jar defaults (overridden by Nacos)
 └── logback-spring.xml                          # logging
+
+docs/nacos/                                     # Nacos config templates
+├── README.md                                   # how to upload, hot-reload demo
+├── opengradle.yaml                             # main dataId → routes / whitelist / auth
+└── global-variables.yaml                       # optional shared-configs dataId
 ```
 
 ## Filter chain
@@ -119,9 +125,37 @@ Replace `AuthService.seedDemoUsers()` with a real `UserRepository` lookup before
 Prerequisites:
 - JDK 11
 - A reachable Redis (default `127.0.0.1:6379`)
-- A reachable Nacos (default `127.0.0.1:8848`) — or disable Nacos by removing `spring-cloud-starter-bootstrap` / the two nacos dependencies in `build.gradle`
+- A reachable Nacos (default `127.0.0.1:8848`) — `fail-fast: false` is set in `bootstrap.yml`, so the gateway still starts with `application.yml` defaults if Nacos is down
 
-Start:
+### One-shot setup with Docker
+
+```bash
+# Redis
+docker run -d --name redis -p 6379:6379 redis:7
+
+# Nacos (standalone)
+docker run -d --name nacos -p 8848:8848 -e MODE=standalone nacos/nacos-server:v2.1.0
+```
+
+### Push the gateway config to Nacos
+
+The template lives in `docs/nacos/opengradle.yaml`. Either:
+
+- **Manually**: Open <http://localhost:8848/nacos> (default `nacos / nacos`),
+  Configuration Management → "+", `dataId=opengradle.yaml`, `Group=DEFAULT_GROUP`,
+  format `YAML`, paste the file content, click **Publish**.
+- **CLI**:
+  ```bash
+  curl -X POST "http://localhost:8848/nacos/v1/cs/configs" \
+    --data-urlencode "dataId=opengradle.yaml" \
+    --data-urlencode "group=DEFAULT_GROUP" \
+    --data-urlencode "type=yaml" \
+    --data-urlencode "content=$(cat docs/nacos/opengradle.yaml)"
+  ```
+
+See [`docs/nacos/README.md`](docs/nacos/README.md) for the full walkthrough and hot-reload demo.
+
+### Start the gateway
 
 ```bash
 ./gradlew bootRun
@@ -133,6 +167,18 @@ Or build and run the jar:
 ./gradlew bootJar
 java -jar build/libs/opengradle-1.0-SNAPSHOT.jar
 ```
+
+### What Nacos drives
+
+| Property in `opengradle.yaml` | Bound to | Hot reload? |
+|-------------------------------|----------|:-----------:|
+| `spring.cloud.gateway.routes` | Gateway route table | ✅ |
+| `gateway.whitelist` | `WhiteListConfiguration` (`@RefreshScope`) | ✅ |
+| `auth.token-ttl-seconds` | `AuthConfiguration` (`@RefreshScope`) | ✅ |
+
+Whitelist/auth changes take effect for the **next** request after `RefreshEvent`
+fires (~1–2s after publishing in Nacos). Route changes auto-trigger a
+`RefreshRoutesEvent`.
 
 ## End-to-end test
 

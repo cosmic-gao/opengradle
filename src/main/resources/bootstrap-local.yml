@@ -3,5 +3,11 @@ spring:
     nacos:
       config:
         server-addr: 127.0.0.1:8848
+        # Optional — switch to a private namespace (e.g. for dev sandbox).
+        # namespace: 11111111-2222-3333-4444-555555555555
+        # group: DEFAULT_GROUP
+        # username: nacos
+        # password: nacos
       discovery:
         server-addr: 127.0.0.1:8848
+        # namespace: 11111111-2222-3333-4444-555555555555
