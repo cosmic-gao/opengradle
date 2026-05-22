@@ -1,30 +1,30 @@
 package com.opengradle.constant;
 
 /**
- * Common string constants used across filters and controllers.
+ * 过滤器和控制器共用的字符串常量集中处。
  */
 public interface Constant {
 
-    /** HTTP header name for the auth token. */
+    /** 鉴权 token 的 HTTP 头名称。 */
     String TOKEN_HEADER = "token";
 
-    /** HTTP header name for the tenant code (multi-tenant routing). */
+    /** 租户编码 HTTP 头(多租户路由用)。 */
     String HEADER_TENANT_CODE = "tenantCode";
 
-    /** Forwarded-for header. */
+    /** 客户端真实 IP 转发头。 */
     String X_FORWARDED_FOR = "x-forwarded-for";
 
-    // ---------- Downstream identity headers injected by AuthFilter ----------
+    // ---------- 由 AuthFilter 写入、给下游服务读取的身份头 ----------
 
-    /** Resolved userId injected for downstream services. */
+    /** 解析后的 userId,注入给下游服务。 */
     String HEADER_USER_ID = "x-user-id";
 
-    /** Resolved username injected for downstream services. */
+    /** 解析后的 username,注入给下游服务。 */
     String HEADER_USERNAME = "x-username";
 
-    /** Resolved tenantCode injected for downstream services. */
+    /** 解析后的 tenantCode,注入给下游服务。 */
     String HEADER_TENANT_CODE_INJECTED = "x-tenant-code";
 
-    /** Boolean flag "true"/"false" — whether the user is a platform super-admin. */
+    /** 字符串 "true"/"false" —— 是否为平台超级管理员。 */
     String HEADER_SUPER_ADMIN = "x-super-admin";
 }

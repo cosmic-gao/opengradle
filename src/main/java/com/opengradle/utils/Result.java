@@ -6,7 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * Unified response envelope.
+ * 统一响应封装。
  * <pre>
  * { "code": 0, "msg": "ok", "data": ... }
  * </pre>

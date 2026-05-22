@@ -29,18 +29,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Token-based auth global filter.
+ * 基于 token 的全局鉴权过滤器。
  *
- * <p>Pipeline per request:
+ * <p>每个请求的处理顺序:
  * <ol>
- *   <li>If the URI matches a whitelist regex (configured via {@code gateway.whitelist}),
- *       the request bypasses authentication entirely.</li>
- *   <li>Otherwise the {@code token} header is resolved through {@link TokenStore}
- *       to a {@link UserContext}. Absence or expiry results in HTTP 401 with a JSON body.</li>
- *   <li>On success, identity headers ({@code x-user-id}, {@code x-username},
- *       {@code x-tenant-code}, {@code x-super-admin}) are injected so downstream
- *       services trust the gateway and do not re-validate tokens.</li>
- *   <li>The resolved client IP is forwarded via {@code x-forwarded-for}.</li>
+ *   <li>命中 {@code gateway.whitelist} 中的正则则跳过鉴权,直接放行。</li>
+ *   <li>否则取 {@code token} 请求头,通过 {@link TokenStore} 解析为
+ *       {@link UserContext};缺失或失效则返回 401(JSON 响应体)。</li>
+ *   <li>成功后注入身份头 ({@code x-user-id}、{@code x-username}、
+ *       {@code x-tenant-code}、{@code x-super-admin}),下游服务直接信任,
+ *       不再重复校验 token。</li>
+ *   <li>解析出的客户端真实 IP 通过 {@code x-forwarded-for} 透传给下游。</li>
  * </ol>
  */
 @Slf4j
@@ -53,7 +52,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private final WhiteListConfiguration whiteListConfiguration;
     private final TokenStore tokenStore;
 
-    /** Run before {@code RouteToRequestUrlFilter} (10000) and the load-balancer filter (10150). */
+    /** 必须先于 {@code RouteToRequestUrlFilter}(10000)和负载均衡过滤器(10150)执行。 */
     @Override
     public int getOrder() {
         return 10;
@@ -66,32 +65,32 @@ public class AuthFilter implements GlobalFilter, Ordered {
         String path = request.getPath().pathWithinApplication().value();
         String clientIp = resolveClientIp(request);
 
-        // 1) whitelist bypass — but still inject the client IP for downstream
+        // 1) 白名单放行 —— 但仍要把客户端 IP 透传给下游
         if (matchesWhitelist(whiteListConfiguration.getWhitelist(), path)) {
             log.debug("auth: whitelisted, path={}", path);
             return chain.filter(withClientIp(exchange, clientIp));
         }
 
-        // 2) token must exist
+        // 2) token 必须存在
         String token = headers.getFirst(Constant.TOKEN_HEADER);
         if (CharSequenceUtil.isBlank(token)) {
             return unauthorized(exchange, "token is missing.");
         }
 
-        // 3) token must resolve to a UserContext
+        // 3) token 必须能解析出 UserContext
         Optional<UserContext> ctxOpt = tokenStore.get(token);
         if (!ctxOpt.isPresent()) {
             return unauthorized(exchange, "token is invalid or expired.");
         }
         UserContext ctx = ctxOpt.get();
 
-        // 4) inject identity headers + forwarded IP for downstream
+        // 4) 注入身份头 + 透传客户端 IP
         ServerWebExchange mutated = withIdentityHeaders(exchange, ctx, clientIp);
         log.debug("auth: ok, userId={}, tenant={}, path={}", ctx.getUserId(), ctx.getTenantCode(), path);
         return chain.filter(mutated);
     }
 
-    // ---------------------------------------------------------------- helpers
+    // ---------------------------------------------------------------- 辅助方法
 
     private ServerWebExchange withClientIp(ServerWebExchange exchange, String clientIp) {
         ServerHttpRequest mutated = exchange.getRequest().mutate()
@@ -135,7 +134,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     }
 
     private String resolveClientIp(ServerHttpRequest request) {
-        // Prefer existing X-Forwarded-For (set by upstream proxies/LB).
+        // 优先使用已有的 X-Forwarded-For(上游代理 / 负载均衡器写入)。
         String xff = request.getHeaders().getFirst(Constant.X_FORWARDED_FOR);
         if (CharSequenceUtil.isNotBlank(xff)) {
             int comma = xff.indexOf(',');

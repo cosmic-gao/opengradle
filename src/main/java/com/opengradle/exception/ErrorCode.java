@@ -1,10 +1,10 @@
 package com.opengradle.exception;
 
 /**
- * Standard error codes returned by the gateway.
+ * 网关统一的错误码定义。
  *
- * <p>HTTP-aligned codes (401/403/500) are used in the JSON body so that
- * callers can branch on a single integer regardless of transport semantics.
+ * <p>取值与 HTTP 状态码对齐(401/403/500…),让调用方能用同一个整数判断结果,
+ * 不必区分是 HTTP 层还是业务层的错误。
  */
 public interface ErrorCode {
     int OK = 0;

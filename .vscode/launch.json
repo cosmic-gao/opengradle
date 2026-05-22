@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "WebApplication",
+      "request": "launch",
+      "mainClass": "com.opengradle.WebApplication",
+      "projectName": "opengradle",
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopOnEntry": false
+    }
+  ]
+}

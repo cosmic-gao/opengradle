@@ -9,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Whitelisted URI patterns (regex) that bypass the auth check.
- * Bound from configuration prefix {@code gateway.whitelist}.
+ * 鉴权白名单的正则集合 —— 命中即跳过鉴权。绑定到配置前缀 {@code gateway.whitelist}。
  *
  * <pre>
  * gateway:
@@ -18,6 +17,8 @@ import java.util.List;
  *     - sys/login
  *     - sys/share/.*
  * </pre>
+ *
+ * <p>带 {@code @RefreshScope},Nacos 推送后无需重启即可生效。
  */
 @Data
 @Configuration
@@ -25,6 +26,6 @@ import java.util.List;
 @ConfigurationProperties(prefix = "gateway")
 public class WhiteListConfiguration {
 
-    /** Regex patterns; an inbound URI matching any one of them bypasses auth. */
+    /** 正则列表;只要请求路径(去掉前导 "/")匹配其中任一条,就放行不鉴权。 */
     private List<String> whitelist = new ArrayList<>();
 }

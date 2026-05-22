@@ -9,14 +9,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * In-memory token store backed by Caffeine, with per-entry TTL.
+ * 基于 Caffeine 的进程内 token 存储,支持每个条目独立 TTL。
  *
- * <p>Each {@link #put(String, UserContext, long)} call sets its own expiration,
- * matching the previous Redis {@code SET ... EX} semantics. Tokens are evicted
- * automatically once expired; reads do not extend the TTL.
+ * <p>{@link #put(String, UserContext, long)} 调用时各自指定过期时间,语义对齐
+ * 之前 Redis 的 {@code SET ... EX}。过期条目由 Caffeine 自动清理,读取不会续期。
  *
- * <p>State is local to the JVM — adequate for single-instance gateways and
- * development. Multi-instance deployments need a shared backend (Redis / JWT).
+ * <p>数据仅保留在当前 JVM 内 —— 单实例网关或本地开发足够;多实例部署需要切换
+ * 到共享存储(Redis / JWT 等)。
  */
 @Component
 public class TokenStore {
@@ -56,9 +55,9 @@ public class TokenStore {
     }
 
     /**
-     * Per-entry expiration policy — TTL is carried on the {@link Entry} itself.
-     * Pulled out of the cache builder so older IDEs (e.g. Eclipse JDT) don't
-     * misreport overrides on the anonymous form.
+     * 单条目过期策略 —— TTL 直接挂在 {@link Entry} 上。
+     * 拆成命名内部类是为了规避部分 IDE(如 Eclipse JDT)对匿名内部类
+     * + Caffeine 注解的 override 误报。
      */
     private static final class PerEntryExpiry implements Expiry<String, Entry> {
         @Override

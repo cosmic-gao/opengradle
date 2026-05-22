@@ -8,11 +8,10 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * Authenticated user context, cached in Redis under {@code TOKENS:&lt;token&gt;}.
+ * 已认证用户上下文,作为 token 对应的值缓存在 {@link TokenStore} 中。
  *
- * <p>This is the minimum payload the gateway needs to identify a request:
- * the user identity and tenant scope. Downstream services receive this
- * information via injected request headers (see {@code AuthFilter}).
+ * <p>这是网关识别一个请求所需的最小载荷:用户身份 + 租户范围。下游服务
+ * 通过 AuthFilter 注入的请求头拿到这些信息(无需再校验 token)。
  */
 @Data
 @Builder
@@ -22,15 +21,15 @@ public class UserContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** Stable user identifier (snowflake / DB id / UUID). */
+    /** 稳定的用户唯一标识(雪花 id / DB 主键 / UUID 任选)。 */
     private Long userId;
 
-    /** Display name / login name. */
+    /** 展示名 / 登录名。 */
     private String username;
 
-    /** Tenant scope; null for non multi-tenant deployments. */
+    /** 租户编码;非多租户部署可为 null。 */
     private Long tenantCode;
 
-    /** True for platform super-admins (cross-tenant access). */
+    /** 是否为平台超级管理员(可跨租户访问)。 */
     private boolean superAdmin;
 }

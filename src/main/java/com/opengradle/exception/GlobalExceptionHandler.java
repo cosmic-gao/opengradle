@@ -18,10 +18,10 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Translates uncaught exceptions and downstream 5xx into a unified JSON envelope.
+ * 把未捕获异常和下游 5xx 统一翻译成 JSON 响应体。
  *
- * <p>Ordered with {@code @Order(-1)} so it runs before the default
- * {@code DefaultErrorWebExceptionHandler}.
+ * <p>用 {@code @Order(-1)} 确保比 Spring Boot 默认的
+ * {@code DefaultErrorWebExceptionHandler} 先执行。
  */
 @Slf4j
 @Component

@@ -7,10 +7,9 @@ spring:
   main:
     web-application-type: reactive
 
-  # Nacos: configuration + service discovery.
-  # `spring.config.import` replaces bootstrap.yml on Spring Cloud 2020+ — only the
-  # listed dataIds are pulled, and `optional:` means startup does not fail when
-  # Nacos is unreachable (handy for local dev). Remove `optional:` in production.
+  # Nacos:配置中心 + 服务发现。
+  # Spring Cloud 2020+ 用 `spring.config.import` 取代 bootstrap.yml,只拉取下面列出的
+  # dataId;`optional:` 表示 Nacos 不可达时不阻断启动(本地开发友好),生产环境去掉。
   config:
     import:
       - optional:nacos:opengradle.yaml
@@ -28,15 +27,11 @@ spring:
         username: nacos
         password: nacos
 
-    loadbalancer:
-      ribbon:
-        enabled: false
     gateway:
-      # Routes are typically sourced from Nacos (opengradle.yaml dataId).
-      # The example route below is for verifying the AuthFilter intercepts —
-      # AuthFilter only fires for requests that match a route, so without any
-      # routes configured all requests just 404 and the filter never runs.
-      # Replace `lb://example-service` with your real service name.
+      # 路由通常通过 Nacos(opengradle.yaml dataId)下发。
+      # 下面这条示例路由的存在意义是让 AuthFilter 能被触发 ——
+      # 如果一条路由都没匹配上,请求会直接 404,过滤器根本不会执行。
+      # 把 `lb://example-service` 换成你真正要代理的服务名即可。
       routes:
         - id: example_route
           uri: lb://example-service
@@ -51,12 +46,12 @@ spring:
     time-zone: UTC
     date-format: yyyy-MM-dd'T'HH:mm:ss'Z'
 
-# Whitelist regexes bypass the AuthFilter (path is matched with the leading "/" stripped).
+# 白名单正则(去掉路径前导 "/" 后做正则匹配),命中则绕过 AuthFilter。
 gateway:
   whitelist:
     - actuator/.*
 
-# Actuator
+# Actuator 端点暴露
 management:
   endpoints:
     web:

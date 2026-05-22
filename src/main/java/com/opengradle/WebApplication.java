@@ -8,7 +8,7 @@ import javax.annotation.PostConstruct;
 import java.util.TimeZone;
 
 /**
- * Gateway main application.
+ * 网关主启动类。
  *
  * @author opengradle
  */
@@ -18,11 +18,11 @@ public class WebApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(WebApplication.class, args);
-        log.info("opengradle gateway started successfully");
+        log.info("opengradle 网关启动成功");
     }
 
     /**
-     * Set default time zone to UTC.
+     * 将 JVM 默认时区设置为 UTC。
      */
     @PostConstruct
     void started() {

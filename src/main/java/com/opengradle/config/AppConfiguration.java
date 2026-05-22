@@ -19,10 +19,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
- * Application-wide configuration:
- * - Jackson serializers for LocalDate / LocalDateTime
- * - WebClient with load-balancer support (so it can call lb://service-name)
- * - String &lt;-&gt; date converters for query/path params
+ * 应用级配置:
+ * - LocalDate / LocalDateTime 的 Jackson 序列化格式
+ * - 带负载均衡能力的 WebClient(支持 lb://service-name 这类 URL)
+ * - 查询参数 / 路径参数的 String ↔ 日期 转换器
  */
 @Configuration
 public class AppConfiguration implements WebFluxConfigurer {
@@ -62,7 +62,7 @@ public class AppConfiguration implements WebFluxConfigurer {
     }
 
     /**
-     * WebClient with load-balancer support — can call {@code lb://service-name}.
+     * 带负载均衡能力的 WebClient,可以通过 {@code lb://service-name} 调用 Nacos 中的服务。
      */
     @Bean
     public WebClient webClient(ReactorLoadBalancerExchangeFilterFunction lbFunction) {

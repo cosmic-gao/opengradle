@@ -27,7 +27,12 @@ bin/
 !**/src/test/**/bin/
 
 # IDE - VSCode
-.vscode/
+# Ignore personal settings but keep team-shared configs.
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # IDE - NetBeans
 /nbproject/private/
