@@ -2,32 +2,41 @@ server:
   port: 9999
 
 spring:
-  codec:
-    max-in-memory-size: 10MB
-  jackson:
-    time-zone: UTC
-    date-format: yyyy-MM-dd'T'HH:mm:ss'Z'
+  application:
+    name: opengradle
+  main:
+    web-application-type: reactive
 
-  redis:
-    host: 127.0.0.1
-    port: 6379
-    database: 0
-    timeout: 3000ms
-    jedis:
-      pool:
-        max-active: 50
-        max-idle: 20
-        min-idle: 5
-        max-wait: 3000ms
+  # Nacos: configuration + service discovery.
+  # `spring.config.import` replaces bootstrap.yml on Spring Cloud 2020+ — only the
+  # listed dataIds are pulled, and `optional:` means startup does not fail when
+  # Nacos is unreachable (handy for local dev). Remove `optional:` in production.
+  config:
+    import:
+      - optional:nacos:opengradle.yaml
 
   cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        file-extension: yaml
+        refresh-enabled: true
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+
     loadbalancer:
       ribbon:
         enabled: false
     gateway:
-      # Sample routes — replace with real services.
-      # Routes can also be sourced from Nacos by adding them to the
-      # opengradle.yaml dataId in your Nacos namespace.
+      # Routes are typically sourced from Nacos (opengradle.yaml dataId).
+      # The example route below is for verifying the AuthFilter intercepts —
+      # AuthFilter only fires for requests that match a route, so without any
+      # routes configured all requests just 404 and the filter never runs.
+      # Replace `lb://example-service` with your real service name.
       routes:
         - id: example_route
           uri: lb://example-service
@@ -36,16 +45,16 @@ spring:
           filters:
             - StripPrefix=1
 
+  codec:
+    max-in-memory-size: 10MB
+  jackson:
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss'Z'
+
 # Whitelist regexes bypass the AuthFilter (path is matched with the leading "/" stripped).
 gateway:
   whitelist:
     - actuator/.*
-    - auth/login
-
-# Auth settings
-auth:
-  # Token TTL in seconds; refreshed on each successful login.
-  token-ttl-seconds: 7200
 
 # Actuator
 management:
@@ -61,5 +70,5 @@ management:
 
 logging:
   level:
-    com.opengradle: debug
-    org.springframework.cloud.gateway: info
+    "[com.opengradle]": debug
+    "[org.springframework.cloud.gateway]": info

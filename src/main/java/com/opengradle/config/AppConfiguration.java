@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.FormatterRegistry;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -29,8 +30,8 @@ public class AppConfiguration implements WebFluxConfigurer {
     @Value("${spring.jackson.date-format:yyyy-MM-dd'T'HH:mm:ss'Z'}")
     private String localDateTimePattern;
 
-    @Value("${spring.codec.max-in-memory-size:10485760}")
-    private int maxInMemorySize;
+    @Value("${spring.codec.max-in-memory-size:10MB}")
+    private DataSize maxInMemorySize;
 
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer dataTimeJacksonMapperCustomizer() {
@@ -67,7 +68,7 @@ public class AppConfiguration implements WebFluxConfigurer {
     public WebClient webClient(ReactorLoadBalancerExchangeFilterFunction lbFunction) {
         return WebClient.builder()
                 .filter(lbFunction)
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(maxInMemorySize))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize((int) maxInMemorySize.toBytes()))
                 .build();
     }
 }

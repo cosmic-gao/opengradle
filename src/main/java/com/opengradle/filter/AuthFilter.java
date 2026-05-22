@@ -2,7 +2,7 @@ package com.opengradle.filter;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import com.opengradle.auth.AuthService;
+import com.opengradle.auth.TokenStore;
 import com.opengradle.auth.UserContext;
 import com.opengradle.config.WhiteListConfiguration;
 import com.opengradle.constant.Constant;
@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -35,7 +35,7 @@ import java.util.Optional;
  * <ol>
  *   <li>If the URI matches a whitelist regex (configured via {@code gateway.whitelist}),
  *       the request bypasses authentication entirely.</li>
- *   <li>Otherwise the {@code token} header is resolved through {@link AuthService}
+ *   <li>Otherwise the {@code token} header is resolved through {@link TokenStore}
  *       to a {@link UserContext}. Absence or expiry results in HTTP 401 with a JSON body.</li>
  *   <li>On success, identity headers ({@code x-user-id}, {@code x-username},
  *       {@code x-tenant-code}, {@code x-super-admin}) are injected so downstream
@@ -44,15 +44,20 @@ import java.util.Optional;
  * </ol>
  */
 @Slf4j
-@Order(10)
 @Component
 @RequiredArgsConstructor
-public class AuthFilter implements GlobalFilter {
+public class AuthFilter implements GlobalFilter, Ordered {
 
     private static final String ERR_TEMPLATE = "{\"code\":{},\"msg\":\"{}\",\"data\":null}";
 
     private final WhiteListConfiguration whiteListConfiguration;
-    private final AuthService authService;
+    private final TokenStore tokenStore;
+
+    /** Run before {@code RouteToRequestUrlFilter} (10000) and the load-balancer filter (10150). */
+    @Override
+    public int getOrder() {
+        return 10;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -74,13 +79,7 @@ public class AuthFilter implements GlobalFilter {
         }
 
         // 3) token must resolve to a UserContext
-        Optional<UserContext> ctxOpt;
-        try {
-            ctxOpt = authService.getUserContext(token);
-        } catch (Exception e) {
-            log.error("auth: getUserContext failed: {}", e.getMessage(), e);
-            return unauthorized(exchange, "auth backend unavailable.");
-        }
+        Optional<UserContext> ctxOpt = tokenStore.get(token);
         if (!ctxOpt.isPresent()) {
             return unauthorized(exchange, "token is invalid or expired.");
         }
